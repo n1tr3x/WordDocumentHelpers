@@ -9,10 +9,22 @@
   <ItemGroup>
     <!-- PIA-пакет вместо <COMReference>: те же типы Microsoft.Office.Interop.Word,
          но сборка не требует задачи ResolveComReference (работает под dotnet build).
-         Word по-прежнему должен быть установлен в рантайме. -->
+         Встраивание interop-типов задаётся target-ом EmbedWordInterop ниже: метаданные
+         <EmbedInteropTypes> у PackageReference в SDK к NuGet-сборкам не применяются. -->
     <PackageReference Include="Microsoft.Office.Interop.Word" Version="15.0.4797.1004" />
-    <PackageReference Include="FreeSpire.Doc" Version="10.8.1" />
-    <PackageReference Include="Microsoft.Windows.Compatibility" Version="8.0.4" />
+    <PackageReference Include="FreeSpire.Doc" Version="14.4.0" />
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="10.0.8" />
   </ItemGroup>
+
+  <!-- Встраиваем COM interop-типы Word (как было у COMReference EmbedInteropTypes=true),
+       чтобы в рантайме не грузились Microsoft.Office.Interop.Word.dll и зависимая office.dll
+       (Office Core PIA), которой нет -> иначе FileNotFoundException при работе с Word. -->
+  <Target Name="EmbedWordInterop" AfterTargets="ResolveAssemblyReferences">
+    <ItemGroup>
+      <ReferencePath Condition="'%(FileName)' == 'Microsoft.Office.Interop.Word'">
+        <EmbedInteropTypes>true</EmbedInteropTypes>
+      </ReferencePath>
+    </ItemGroup>
+  </Target>
 
 </Project>

@@ -13,14 +13,18 @@ public static class WordDocumentHelper
 		wordApplication.Visible = true;
 		Word.Document wordDocument = wordApplication.Documents.Open(filepath);
 
-		int result = wordDocument.Words.Last.Information[Word.WdInformation.wdActiveEndPageNumber];
+		int result = (int)wordDocument.Words.Last.Information[Word.WdInformation.wdActiveEndPageNumber];
 		wordApplication.Quit();
 		return result;
 	}
 
 	public static int GetParagraphPageByText(this Word.Document document, string text)
 	{
-		return int.Parse(document.Paragraphs.Cast<Word.Paragraph>().FirstOrDefault(paragraph => paragraph.Range.Text.Contains(text)).Range.Information[Word.WdInformation.wdActiveEndPageNumber].ToString());
+		Word.Paragraph? paragraph = document.Paragraphs.Cast<Word.Paragraph>()
+			.FirstOrDefault(paragraph => paragraph.Range.Text.Contains(text));
+		if (paragraph is null)
+			return -1;
+		return (int)paragraph.Range.Information[Word.WdInformation.wdActiveEndPageNumber];
 	}
 
 	public static int GetParagraphPageByTextParallel(this Word.Document document, string text)
@@ -31,48 +35,54 @@ public static class WordDocumentHelper
 	public static int GetParagraphPageByTextFromIndex(this Word.Document document, string text, int startParagraph)
 	{
 		List<Word.Paragraph> l = document.Paragraphs.Cast<Word.Paragraph>().ToList();
-		for (int i = startParagraph; i < document.Paragraphs.Count; i++)
+		for (int i = startParagraph; i < l.Count; i++)
 			if (l[i].Range.Text.Contains(text))
-				return int.Parse(document.Paragraphs[i].Range.Information[Word.WdInformation.wdActiveEndPageNumber].ToString());
+				return (int)l[i].Range.Information[Word.WdInformation.wdActiveEndPageNumber];
 		return -1;
 	}
 
 	public static Dictionary<string, int> GetParagraphsPages(this Word.Document document)
 	{
 		Dictionary<string, int> result = new();
-		for (int i = 1; i < document.Paragraphs.Count; i++)
-			result[document.Paragraphs[i].Range.Text] = int.Parse(document.Paragraphs[i].Range.Information[Word.WdInformation.wdActiveEndPageNumber].ToString());
+		for (int i = 1; i <= document.Paragraphs.Count; i++)
+		{
+			Word.Range range = document.Paragraphs[i].Range;
+			result[range.Text] = (int)range.Information[Word.WdInformation.wdActiveEndPageNumber];
+		}
 		return result;
 	}
 
 	public static int GetParagraphIndex(this Microsoft.Office.Interop.Word.Paragraph paragraph)
 	{
-		return int.Parse(paragraph.Range.Information[Microsoft.Office.Interop.Word.WdInformation.wdActiveEndPageNumber]);
+		return (int)paragraph.Range.Information[Microsoft.Office.Interop.Word.WdInformation.wdActiveEndPageNumber];
 	}
 
 	public static bool ReplaceText(this Spire.Doc.Document document, string oldText, string newText)
 	{
 		bool flag = false;
-		foreach (Paragraph paragraph in document.Sections[0].Paragraphs)
+		foreach (Section section in document.Sections)
 		{
-			if (paragraph.Text.Contains(oldText))
+			foreach (Paragraph paragraph in section.Paragraphs)
 			{
-				flag = true;
-				paragraph.Text = paragraph.Text.Replace(oldText, newText);
-			}
-		}
-		foreach (ITable table in document.Sections[0].Tables)
-		{
-			foreach (TableRow tableRow in table.Rows)
-			{
-				foreach (TableCell tableRowCell in tableRow.Cells)
+				if (paragraph.Text.Contains(oldText))
 				{
-					foreach (Paragraph paragraph in tableRowCell.Paragraphs)
+					flag = true;
+					paragraph.Text = paragraph.Text.Replace(oldText, newText);
+				}
+			}
+			foreach (ITable table in section.Tables)
+			{
+				foreach (TableRow tableRow in table.Rows)
+				{
+					foreach (TableCell tableRowCell in tableRow.Cells)
 					{
-						if (paragraph.Text.Contains(oldText))
+						foreach (Paragraph paragraph in tableRowCell.Paragraphs)
 						{
-							flag = true;
-							paragraph.Text = paragraph.Text.Replace(oldText, newText);
+							if (paragraph.Text.Contains(oldText))
+							{
+								flag = true;
+								paragraph.Text = paragraph.Text.Replace(oldText, newText);
+							}
 						}
 					}
 				}
