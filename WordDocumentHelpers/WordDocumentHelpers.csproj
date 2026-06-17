@@ -1,9 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
     <DebugType>embedded</DebugType>
   </PropertyGroup>
 
@@ -29,6 +30,9 @@
     <PackageReference Include="Microsoft.Office.Interop.Word" Version="15.0.4797.1004" />
     <PackageReference Include="FreeSpire.Doc" Version="14.4.0" />
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="10.0.8" />
+    <!-- Нужен для late-bound dynamic-доступа к COM indexed property Range.Information[...]
+         на netstandard2.0 (на net*-windows биндер встроен в рантайм). -->
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
   </ItemGroup>
 
   <ItemGroup>
