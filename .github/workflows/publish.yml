@@ -35,8 +35,9 @@ jobs:
         run: dotnet pack WordDocumentHelpers/WordDocumentHelpers.csproj -c Release -p:Version=${{ steps.ver.outputs.version }} -o artifacts
 
       - name: Push to GitHub Packages
+        shell: bash
         run: >
-          dotnet nuget push "artifacts/*.nupkg"
+          dotnet nuget push artifacts/*.nupkg
           --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
           --api-key ${{ secrets.GITHUB_TOKEN }}
           --skip-duplicate
