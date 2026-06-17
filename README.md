@@ -1,5 +1,7 @@
 # WordDocumentHelpers
 
+[![NuGet](https://img.shields.io/nuget/v/WordDocumentHelpers.svg)](https://www.nuget.org/packages/WordDocumentHelpers/)
+
 Библиотека extension-методов для работы с Word-документами. Таргет — `netstandard2.0`
 (минимум, который требуют зависимости), потребляется из любого современного .NET.
 
