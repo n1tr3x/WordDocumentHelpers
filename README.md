@@ -1,14 +1,16 @@
 # WordDocumentHelpers
 
-Небольшая .NET 8 (`net8.0-windows`) библиотека с extension-методами для работы с Word-документами.
+Библиотека extension-методов для работы с Word-документами. Таргет — `netstandard2.0`
+(минимум, который требуют зависимости), потребляется из любого современного .NET.
 
-Два движка:
-- **Microsoft.Office.Interop.Word** — методы, которым нужен установленный Word (подсчёт страниц, номер страницы абзаца по тексту). Interop-типы встраиваются (`EmbedInteropTypes`), чтобы не тянуть Office Core PIA в рантайме.
-- **Spire.Doc (FreeSpire.Doc)** — замена плейсхолдеров без установленного Word.
+Два независимых движка:
+
+- **Microsoft.Office.Interop.Word** — методы, автоматизирующие установленный Word через COM
+  (подсчёт страниц, поиск номера страницы абзаца по тексту). Требуют установленного Word и
+  работают только на Windows. Interop-типы встраиваются (`EmbedInteropTypes`).
+- **Spire.Doc (FreeSpire.Doc)** — замена текста без установленного Word.
 
 ## Установка (GitHub Packages)
-
-Пакет публикуется в приватный GitHub Packages фид владельца `n1tr3x`:
 
 ```powershell
 dotnet nuget add source https://nuget.pkg.github.com/n1tr3x/index.json `
@@ -16,37 +18,79 @@ dotnet nuget add source https://nuget.pkg.github.com/n1tr3x/index.json `
 dotnet add package WordDocumentHelpers
 ```
 
-## API
+## Функции
 
-| Метод | Движок | Назначение |
-|---|---|---|
-| `GetPagesCount(string filepath)` | Interop | Количество страниц в документе |
-| `Document.GetParagraphPageByText(text)` | Interop | Номер страницы первого абзаца с текстом (`-1`, если не найдено) |
-| `Document.GetParagraphPageByTextFromIndex(text, startParagraph)` | Interop | То же, начиная с 0-based индекса абзаца |
-| `Document.GetParagraphsPages()` | Interop | Словарь «текст абзаца → страница» |
-| `Spire.Doc.Document.ReplaceText(old, new)` | Spire | Замена текста по всем секциям и таблицам |
+Все методы — статические; помеченные `this` являются extension-методами.
 
-### Пример
+### `GetPagesCount`
+```csharp
+public static int GetPagesCount(string filepath)
+```
+Открывает документ в новом экземпляре Word и возвращает **общее число страниц**.
+Движок: Interop. Запускает Word (`Visible = true`) и закрывает его перед возвратом.
+
+### `GetParagraphPageByText`
+```csharp
+public static int GetParagraphPageByText(this Word.Document document, string text)
+```
+Возвращает **номер страницы первого абзаца**, текст которого содержит `text`.
+Если совпадений нет — возвращает `-1`. Движок: Interop.
+
+### `GetParagraphPageByTextParallel`
+```csharp
+public static int GetParagraphPageByTextParallel(this Word.Document document, string text)
+```
+То же, что `GetParagraphPageByText`, но при отсутствии совпадения **бросает**
+`InvalidOperationException` (использует `First`, а не `FirstOrDefault`). Движок: Interop.
+> Имя историческое — параллельной обработки внутри нет.
+
+### `GetParagraphPageByTextFromIndex`
+```csharp
+public static int GetParagraphPageByTextFromIndex(this Word.Document document, string text, int startParagraph)
+```
+Ищет первый абзац с текстом `text`, **начиная с 0-based индекса** `startParagraph`,
+и возвращает номер его страницы. Если до конца документа совпадений нет — `-1`. Движок: Interop.
+
+### `GetParagraphsPages`
+```csharp
+public static Dictionary<string, int> GetParagraphsPages(this Word.Document document)
+```
+Строит словарь **«текст абзаца → номер страницы»** по всем абзацам документа.
+При одинаковом тексте у нескольких абзацев остаётся последнее значение (last-wins). Движок: Interop.
+
+### `GetParagraphIndex`
+```csharp
+public static int GetParagraphIndex(this Word.Paragraph paragraph)
+```
+Возвращает **номер страницы**, на которой заканчивается переданный абзац
+(`wdActiveEndPageNumber`). Движок: Interop.
+> Имя историческое — метод отдаёт номер страницы, а не индекс абзаца.
+
+### `ReplaceText`
+```csharp
+public static bool ReplaceText(this Spire.Doc.Document document, string oldText, string newText)
+```
+Заменяет `oldText` на `newText` **во всех секциях**: в абзацах и в ячейках таблиц.
+Возвращает `true`, если хотя бы одна замена произошла. Движок: Spire.Doc.
+
+## Примеры
 
 ```csharp
 // Interop (нужен установленный Word)
 var word = new Microsoft.Office.Interop.Word.Application();
 var doc = word.Documents.Open(@"C:\contract.docx");
-int page = doc.GetParagraphPageByText("Раздел 5");
+int total = WordDocumentHelper.GetPagesCount(@"C:\contract.docx");
+int page  = doc.GetParagraphPageByText("Раздел 5");        // -1, если не найдено
+var map   = doc.GetParagraphsPages();                       // текст абзаца -> страница
 
 // Spire (без Word)
 var sdoc = new Spire.Doc.Document(@"C:\template.docx");
-sdoc.ReplaceText("НОМЕР_ДЕЛА", "А40-12345/2026");
+bool changed = sdoc.ReplaceText("НОМЕР_ДЕЛА", "А40-12345/2026");
 sdoc.SaveToFile(@"C:\out.docx");
 ```
 
-## Замечания
-
-- Interop-методы требуют установленного Microsoft Word.
-- `FreeSpire.Doc` — бесплатная редакция со встроенными лимитами (страницы/абзацы) и возможным evaluation-водяным знаком на части операций.
-
 ## Публикация
 
-Релиз публикуется автоматически: push git-тега вида `v1.2.3` запускает workflow
-[`.github/workflows/publish.yml`](.github/workflows/publish.yml), который собирает
-пакет с версией из тега и пушит его в GitHub Packages через `GITHUB_TOKEN`.
+Push git-тега вида `vX.Y.Z` запускает workflow
+[`.github/workflows/publish.yml`](.github/workflows/publish.yml): он собирает пакет с версией
+из тега и пушит его в GitHub Packages через `GITHUB_TOKEN`.
