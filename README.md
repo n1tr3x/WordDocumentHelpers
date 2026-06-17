@@ -91,6 +91,8 @@ sdoc.SaveToFile(@"C:\out.docx");
 
 ## Публикация
 
-Push git-тега вида `vX.Y.Z` запускает workflow
-[`.github/workflows/publish.yml`](.github/workflows/publish.yml): он собирает пакет с версией
-из тега и пушит его в GitHub Packages через `GITHUB_TOKEN`.
+Каждый push в `master` запускает workflow
+[`.github/workflows/publish.yml`](.github/workflows/publish.yml): он собирает пакет и пушит
+его в GitHub Packages через `GITHUB_TOKEN`. Версия формируется автоматически как
+`MAJOR_MINOR.<номер запуска>` (`1.0.1`, `1.0.2`, …) — patch инкрементится сам.
+Чтобы поднять мажор/минор, измените переменную `MAJOR_MINOR` в workflow.
