@@ -1,0 +1,46 @@
+name: Publish NuGet package
+
+# Каждый push в master публикует новую версию в GitHub Packages.
+# Версия = MAJOR_MINOR.<номер запуска workflow> — patch авто-инкрементится.
+# Чтобы поднять мажор/минор, измените MAJOR_MINOR ниже.
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  MAJOR_MINOR: '1.0'
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Compute version
+        id: ver
+        shell: bash
+        run: echo "version=${MAJOR_MINOR}.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Pack
+        run: dotnet pack WordDocumentHelpers/WordDocumentHelpers.csproj -c Release -p:Version=${{ steps.ver.outputs.version }} -o artifacts
+
+      - name: Push to GitHub Packages
+        run: >
+          dotnet nuget push "artifacts/*.nupkg"
+          --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+          --api-key ${{ secrets.GITHUB_TOKEN }}
+          --skip-duplicate
+
+      - name: Summary
+        shell: bash
+        run: echo "Published WordDocumentHelpers ${{ steps.ver.outputs.version }} to GitHub Packages" >> "$GITHUB_STEP_SUMMARY"
