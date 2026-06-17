@@ -4,6 +4,21 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <!-- NuGet-метаданные пакета. Version по умолчанию ниже перекрывается в CI
+       значением из git-тега: dotnet pack -p:Version=<тег без 'v'>. -->
+  <PropertyGroup>
+    <PackageId>WordDocumentHelpers</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>n1tr3x</Authors>
+    <Description>Extension-method хелперы для Word-документов: номер страницы абзаца по тексту и подсчёт страниц через Microsoft.Office.Interop.Word, замена плейсхолдеров по секциям и таблицам через Spire.Doc.</Description>
+    <PackageTags>word;docx;office;interop;spire;automation</PackageTags>
+    <RepositoryUrl>https://github.com/n1tr3x/WordDocumentHelpers</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeSymbols>false</IncludeSymbols>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,6 +29,10 @@
     <PackageReference Include="Microsoft.Office.Interop.Word" Version="15.0.4797.1004" />
     <PackageReference Include="FreeSpire.Doc" Version="14.4.0" />
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="10.0.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <!-- Встраиваем COM interop-типы Word (как было у COMReference EmbedInteropTypes=true),
