@@ -10,11 +10,9 @@
   работают только на Windows. Interop-типы встраиваются (`EmbedInteropTypes`).
 - **Spire.Doc (FreeSpire.Doc)** — замена текста без установленного Word.
 
-## Установка (GitHub Packages)
+## Установка
 
 ```powershell
-dotnet nuget add source https://nuget.pkg.github.com/n1tr3x/index.json `
-  --name github-n1tr3x --username n1tr3x --password <GITHUB_PAT с read:packages>
 dotnet add package WordDocumentHelpers
 ```
 
