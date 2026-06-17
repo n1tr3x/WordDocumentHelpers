@@ -88,11 +88,3 @@ var sdoc = new Spire.Doc.Document(@"C:\template.docx");
 bool changed = sdoc.ReplaceText("НОМЕР_ДЕЛА", "А40-12345/2026");
 sdoc.SaveToFile(@"C:\out.docx");
 ```
-
-## Публикация
-
-Каждый push в `master` запускает workflow
-[`.github/workflows/publish.yml`](.github/workflows/publish.yml): он собирает пакет и пушит
-его в GitHub Packages через `GITHUB_TOKEN`. Версия формируется автоматически как
-`MAJOR_MINOR.<номер запуска>` (`1.0.1`, `1.0.2`, …) — patch инкрементится сам.
-Чтобы поднять мажор/минор, измените переменную `MAJOR_MINOR` в workflow.
